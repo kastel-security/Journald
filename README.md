@@ -1,6 +1,6 @@
 # Three Vulnerabilities in Journald Forward Secure Log Sealing
 
-This repository contains the accompanying code for [the publication](journald-publication.pdf) "Secure Logging in between Theory and Practice: Security Analysis of the Implementation of Forward Secure Log Sealing in Journald". For details on the individual vulnerabilities and theoretical background we refer to the publication.
+This repository contains the accompanying code for the publication "Secure Logging in between Theory and Practice: Security Analysis of the Implementation of Forward Secure Log Sealing in Journald" ([in this repository](journald-publication.pdf) or [on eprint](https://ia.cr/2023/867)). For details on the individual vulnerabilities and theoretical background we refer to the publication.
 The three vulnerabilities mentioned are:
 
 ## [CVE-2023-31439](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-31439)
