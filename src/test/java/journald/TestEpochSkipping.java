@@ -1,6 +1,7 @@
 package journald;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
@@ -32,13 +33,29 @@ class TestEpochSkipping {
 			js.epoch();
 			js.log("hello3");
 			js.verifyJournal();
+			js.rotateJournal();
 		} finally {
 			Thread.sleep(200);
 			js.stopJournald();
 		}
 		js.verifyJournal();
+		String[] archived = js.getArchivedJournals();
+		assertEquals(1, archived.length);
+		js.verifyJournal(archived[0]);
+		JournalFileBuffer rotated = js.reopen();
+		{
+			Header h1 = Header.readHeader(rotated);
+			for (int i = 0; i < h1.nObjects; i++) {
+				JournalObject obj = JournalObject.read(rotated, null);
+				if (obj instanceof TagObject) {
+					System.out.println(obj);
+				}
+			}
+		}
+		
 		Header h = Header.readHeader(mapped);
 		System.out.println("IncompatibleFlags: " + Integer.toHexString(h.incompatibleFlags));
+		System.out.println("CompatibleFlags: " + Integer.toHexString(h.compatibleFlags));
 		long prev = 0;
 		boolean foundJump = false;
 		for (int i = 0; i < h.nObjects; i++) {

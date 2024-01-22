@@ -175,7 +175,7 @@ public class Challenger {
 		p.getErrorStream().transferTo(beos);
 		try {
 			if (p.waitFor() != 0) {
-				throw new Error();
+				throw new Error(new String(beos.toByteArray(), StandardCharsets.UTF_8));
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();

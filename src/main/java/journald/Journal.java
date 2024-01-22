@@ -172,6 +172,8 @@ public class Journal {
 			}
 			if (headerSize > 0x100) {
 				bb.getLong();
+			}
+			if (headerSize > 0x108) {
 				bb.getLong();
 			}
 			if (headerSize > 0x110) {

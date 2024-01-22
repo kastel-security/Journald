@@ -7,8 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedList;
 
 public class JournalSystem {
 
@@ -102,14 +104,19 @@ public class JournalSystem {
 	}
 
 	public void verifyJournal() throws IOException, InterruptedException {
-		Process verify = Runtime.getRuntime().exec(new String[] { "bwrap", "--unshare-user", "--uid", "0", //
+		verifyJournal(getVirtualJournalPath());
+	}
+
+	public void verifyJournal(String path) throws IOException, InterruptedException {
+		String[] command = new String[] { "bwrap", "--unshare-user", "--uid", "0", //
 				"--bind", "/", "/", //
 				"--dev-bind", "/dev", "/dev", //
 				"--bind", "testdata/runtime", "/run/systemd/journal", //
 				"--bind", "testdata/logs", "/var/log", //
 				"env", "LANG=C.UTF-8", "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1", //
 				"FAKETIME_TIMESTAMP_FILE=faketimefile", "FAKETIME_NO_CACHE=1", //
-				journalctl, "--verify", "--verify-key=" + vk, "--file=" + getVirtualJournalPath() });
+				journalctl, "--verify", "--verify-key=" + vk, "--file=" + path };
+		Process verify = Runtime.getRuntime().exec(command);
 		verify.getInputStream().transferTo(System.out);
 		verify.getErrorStream().transferTo(System.out);
 		if (verify.waitFor() != 0) {
@@ -117,8 +124,35 @@ public class JournalSystem {
 		}
 	}
 
+	public void rotateJournal() throws IOException, InterruptedException {
+		Process rotate = Runtime.getRuntime().exec(new String[] { "bwrap", "--unshare-user", "--uid", "0", //
+				"--bind", "/", "/", //
+				"--dev-bind", "/dev", "/dev", //
+				"--bind", "testdata/runtime", "/run/systemd/journal", //
+				"--bind", "testdata/logs", "/var/log", //
+				"env", "LANG=C.UTF-8", "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1", //
+				"FAKETIME_TIMESTAMP_FILE=faketimefile", "FAKETIME_NO_CACHE=1", //
+				journalctl, "--rotate" });
+		rotate.getInputStream().transferTo(System.out);
+		rotate.getErrorStream().transferTo(System.out);
+		if (rotate.waitFor() != 0) {
+			throw new Error("Rotating failed");
+		}
+	}
+
 	private String getVirtualJournalPath() {
 		return getVirtualJournalBasePath() + "/system.journal";
+	}
+
+	public String[] getArchivedJournals() {
+		File[] files = new File(getJournalBasePath()).listFiles();
+		LinkedList<String> archived = new LinkedList<>();
+		for (File file : files) {
+			if (file.getName().startsWith("system@") && file.getName().endsWith(".journal")) {
+				archived.add(getVirtualJournalBasePath() + "/" + file.getName());
+			}
+		}
+		return archived.toArray(String[]::new);
 	}
 
 	private String getVirtualJournalBasePath() {
@@ -207,6 +241,10 @@ public class JournalSystem {
 
 	public JournalFileBuffer getJournal() {
 		return journalFile.slice();
+	}
+
+	public JournalFileBuffer reopen() throws IOException {
+		return JournalFileBuffer.open(Paths.get(getJournalBasePath() + "/system.journal"), false);
 	}
 
 }
